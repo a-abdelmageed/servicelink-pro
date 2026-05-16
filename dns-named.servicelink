@@ -1,5 +1,5 @@
 $TTL 86400
-@   IN  SOA     ns1.servicelink.local. root.servicelink.local. (
+@   IN  SOA     ns1.servicelink.ahmed. root.servicelink.ahmed. (
                 2026051601 ; Serial
                 3600       ; Refresh
                 1800       ; Retry
@@ -7,7 +7,7 @@ $TTL 86400
                 86400 )    ; Minimum TTL
 
 ; سكريبت يحدد سيرفر الـ DNS الرئيسي للنطاق
-@   IN  NS      ns1.servicelink.local.
+@   IN  NS      ns1.servicelink.ahmed.
 
 ; توجيه اسم السيرفر ونطاق الموقع إلى الأي بي الخاص بالأباتشي
 ns1 IN  A       10.1.100.5
