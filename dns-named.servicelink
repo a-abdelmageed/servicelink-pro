@@ -1,0 +1,15 @@
+$TTL 86400
+@   IN  SOA     ns1.servicelink.local. root.servicelink.local. (
+                2026051601 ; Serial
+                3600       ; Refresh
+                1800       ; Retry
+                604800     ; Expire
+                86400 )    ; Minimum TTL
+
+; سكريبت يحدد سيرفر الـ DNS الرئيسي للنطاق
+@   IN  NS      ns1.servicelink.local.
+
+; توجيه اسم السيرفر ونطاق الموقع إلى الأي بي الخاص بالأباتشي
+ns1 IN  A       192.168.1.50
+@   IN  A       192.168.1.50
+www IN  A       192.168.1.50
