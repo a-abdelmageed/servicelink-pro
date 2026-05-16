@@ -1,0 +1,94 @@
+# ============================================================
+# ServiceLink Pro — Docker Compose Stack
+# Services: web (PHP/Apache) + db (MySQL 5.7)
+# FOR CONTROLLED IDS/LAB TESTING ONLY
+#
+# Usage:
+#   docker-compose up -d
+#   Open http://localhost:8080
+#
+# To tear down:
+#   docker-compose down -v
+# ============================================================
+
+version: '3.8'
+
+services:
+
+  # ── Web Application ───────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: servicelink_web
+    ports:
+      - "8080:80"           # Access app at http://localhost:8080
+    environment:
+      DB_HOST: db
+      DB_USER: servicelink_user
+      DB_PASS: servicelink_pass
+      DB_NAME: servicelink
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - servicelink_net
+    restart: unless-stopped
+    # No resource limits — intentional for traffic generation in IDS tests
+
+  # ── MySQL Database ────────────────────────────────────────
+  db:
+    image: mysql:5.7                 # 5.7 for broader vuln surface in testing
+    container_name: servicelink_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_lab
+      MYSQL_DATABASE:      servicelink
+      MYSQL_USER:          servicelink_user
+      MYSQL_PASSWORD:      servicelink_pass
+    ports:
+      - "3306:3306"                  # Exposed to host — intentional for direct DB testing
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - servicelink_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "servicelink_user", "-pservicelink_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      --general-log=1
+      --general-log-file=/var/lib/mysql/general.log
+      --log-error=/var/lib/mysql/error.log
+      --slow-query-log=1
+      --slow-query-log-file=/var/lib/mysql/slow.log
+      --long-query-time=0
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    restart: unless-stopped
+
+  # ── Adminer (optional DB GUI) ─────────────────────────────
+  adminer:
+    image: adminer:latest
+    container_name: servicelink_adminer
+    ports:
+      - "8081:8080"                  # DB admin UI at http://localhost:8081
+    networks:
+      - servicelink_net
+    restart: unless-stopped
+    # Login: server=db, user=servicelink_user, pass=servicelink_pass, db=servicelink
+    # OR: server=db, user=root, pass=root_password_lab
+
+# ── Volumes ───────────────────────────────────────────────────
+volumes:
+  db_data:
+    driver: local
+
+# ── Networks ──────────────────────────────────────────────────
+networks:
+  servicelink_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24   # Fixed subnet — useful for Zeek/Suricata rules
